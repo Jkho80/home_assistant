@@ -1,0 +1,24 @@
+{
+  "encoder_hbm": "/home/sunrise/HoloBrain_ws/tableware_encoder.hbm",
+  "decoder_hbm": "/home/sunrise/HoloBrain_ws/tableware_decoder.hbm",
+  "model_dir": "/home/sunrise/HoloBrain_ws/organize_tableware_real_piper",
+  "inference_prefix": "inference",
+  "server_name": "holobrain",
+  "host": "0.0.0.0",
+  "port": 8190,
+  "num_joints": 7,
+  "valid_action_step": 64,
+  "torch_device": "cpu",
+  "return_interpolated_actions": true,
+  "verbose_timing": true,
+  "encoder_priority": 1,
+  "decoder_priority": 2,
+  "encoder_bpu_cores": [0],
+  "decoder_bpu_cores": [0],
+  "fixed_text_dir": "/home/sunrise/HoloBrain_ws/fixed_text_tableware",
+  "expected_instruction": "Collect and organize the tableware by placing right side bowl on top of table and left side bowl on top of the right bowl, then graps the red part of the blue knife and put it on top of bowls.",
+
+  "use_precomputed_decoder_text_feature": false,
+  "decoder_text_feature_path": "/home/sunrise/HoloBrain_ws/fixed_text_tableware/text_feature.npy",
+  "decoder_text_token_mask_path": "/home/sunrise/HoloBrain_ws/fixed_text_tableware/text_token_mask.npy"
+}

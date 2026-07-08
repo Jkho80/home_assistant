@@ -1,0 +1,24 @@
+{
+  "encoder_hbm": "/home/sunrise/HoloBrain_ws/HoloBrain_encoder_quantized.hbm",
+  "decoder_hbm": "/home/sunrise/HoloBrain_ws/HoloBrain_decoder_new_calib.hbm",
+  "model_dir": "/home/sunrise/HoloBrain_ws/post_training_graspanything",
+  "inference_prefix": "grasp_anything_ro_onnx",
+  "server_name": "holobrain",
+  "host": "0.0.0.0",
+  "port": 8190,
+  "num_joints": 7,
+  "valid_action_step": 64,
+  "torch_device": "cpu",
+  "return_interpolated_actions": true,
+  "verbose_timing": true,
+  "encoder_priority": 1,
+  "decoder_priority": 2,
+  "encoder_bpu_cores": [0],
+  "decoder_bpu_cores": [0],
+  "fixed_text_dir": "/home/sunrise/HoloBrain_ws/fixed_text",
+  "expected_instruction": "Clear objects into a basket.",
+
+  "use_precomputed_decoder_text_feature": false,
+  "decoder_text_feature_path": "/home/sunrise/HoloBrain_ws/text_cache/default_text_feature.npy",
+  "decoder_text_token_mask_path": "/home/sunrise/HoloBrain_ws/text_cache/default_text_token_mask.npy"
+}

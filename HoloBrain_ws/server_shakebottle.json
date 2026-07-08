@@ -1,0 +1,24 @@
+{
+  "encoder_hbm": "/home/sunrise/HoloBrain_ws/shake_beverages_encoder.hbm",
+  "decoder_hbm": "/home/sunrise/HoloBrain_ws/shake_beverages_decoder.hbm",
+  "model_dir": "/home/sunrise/HoloBrain_ws/shake_beverages",
+  "inference_prefix": "inference",
+  "server_name": "holobrain",
+  "host": "0.0.0.0",
+  "port": 8190,
+  "num_joints": 7,
+  "valid_action_step": 64,
+  "torch_device": "cpu",
+  "return_interpolated_actions": true,
+  "verbose_timing": true,
+  "encoder_priority": 1,
+  "decoder_priority": 2,
+  "encoder_bpu_cores": [0],
+  "decoder_bpu_cores": [0],
+  "fixed_text_dir": "/home/sunrise/HoloBrain_ws/fixed_text_shake_beverage",
+  "expected_instruction": "Shake the beverage with proper arm.",
+
+  "use_precomputed_decoder_text_feature": true,
+  "decoder_text_feature_path": "/home/sunrise/HoloBrain_ws/fixed_text_shake_beverage/text_feature_0.npy",
+  "decoder_text_token_mask_path": "/home/sunrise/HoloBrain_ws/fixed_text_shake_beverage/text_token_mask.npy"
+}
