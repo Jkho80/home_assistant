@@ -1,0 +1,28 @@
+# Python
+__pycache__/
+*.py[cod]
+*.so
+.venv/
+venv/
+
+# 配置文件（含密钥）
+*.env
+*.secret
+
+# 权重文件（太大）
+*.pth
+*.onnx
+*.hbm
+weights/
+
+# 系统文件
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+
+# 日志
+*.log
+log/
