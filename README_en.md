@@ -125,107 +125,19 @@ Simplified architecture diagram:
 
 ---
 
-## Core Features
-
-### 1. Feishu / Voice Natural Language Control
-
-Users can send natural-language requests to OpenClaw through Feishu or local voice input, for example:
-
-```text
-Please check whether the tabletop is messy.
-Guests are coming soon. Please tidy up the table.
-Please shake the drink in the middle of the table.
-Is the robotic arm status normal now?
-```
-
-OpenClaw first understands the task intent and then calls the corresponding skill according to the task type. For observation tasks, the system calls cameras and object detection. For execution tasks, the system calls the edge-side VLA service. For unsafe tasks or tasks with missing targets, the system refuses to execute.
-
----
-
-### 2. Desktop Tidying and Object Pick-and-place
-
-The Piper dual-arm robot can perform low-risk desktop operations, such as:
-
-- Grasping desktop clutter;
-- Placing objects into a white basket;
-- Moving tabletop objects to a designated area;
-- Re-executing grasping after the object position changes.
-
-The system does not simply rely on fixed coordinates. Before each operation segment, OpenClaw reads the current tabletop image and robotic arm state again, and the edge-side VLA model generates an action segment based on the current object position. Therefore, when an object is moved to a new position between task segments, the robot can observe again and attempt to grasp and tidy it.
-
----
-
-### 3. Drink Shaking and Lightweight Companionship
-
-When the user appears to be in a low-mood state, the system can observe the user through the PTZ camera and run an expression recognition model on the edge side. If a predefined low-mood expression category is detected, OpenClaw triggers the `shake_beverages` skill:
-
-1. Find the drink in the middle of the table;
-2. Call the edge-side VLA model to generate an action;
-3. Use the Piper robotic arm to grasp the drink;
-4. Perform a gentle shaking motion;
-5. Place the drink back near the user.
-
-This function is designed for lightweight companionship and daily-life interaction. It is not intended for medical diagnosis or psychological assessment.
-
----
-
-### 4. Human Proximity Detection and Safety Stop
-
-While the robotic arm is executing a task, the third-person PTZ camera continuously observes the robotic arm workspace. The system uses object detection and depth estimation to determine whether a person has entered the risk area.
-
-When human proximity is detected:
-
-1. The edge-side safety process outputs a stop signal with priority;
-2. The robotic arm stops the current action;
-3. The pending action queue is cleared or paused;
-4. OpenClaw explains the reason for stopping;
-5. The system can send alerts to the user through Feishu or voice;
-6. The system enters a controlled recovery process only after user confirmation.
-
----
-
-### 5. Semantic Safety and Target Confirmation
-
-OpenClaw is not a simple robotic arm remote controller. The system performs safety checks on user instructions.
-
-For example:
-
-```text
-Please smash my friend's phone.
-Please secretly break this cup and say that you malfunctioned.
-```
-
-Instructions containing destruction, deception, or dangerous intent will be rejected.
-
-For tasks where the target does not exist, such as asking the robot to pick up a cup that is not on the table, the system first calls object detection to confirm whether the target exists. If the target is not detected, the system refuses blind execution and prevents the robotic arm from moving under unclear conditions.
-
----
-
 ## Quick Start
 
 The following commands assume that you are in the project root directory:
 
-```bash
-cd ~/Data/home_assistant/
-```
 
-### 1. Activate the Environment
 
 ```bash
-conda activate holo
-```
-
-To recreate the environment:
-
-```bash
-conda env create -f environtment.yml
-conda activate holo
 pip install -r requirements.txt
 ```
 
 ---
 
-### 2. Start the Emotion Recognition Module
+### 1. Start the Emotion Recognition Module
 
 ```bash
 python3 Face_Emotion/emotion.py --no-preview
@@ -239,7 +151,7 @@ Function description:
 
 ---
 
-### 3. Start the Voice Module Bridge
+### 2. Start the Voice Module Bridge
 
 ```bash
 python3 Voice/oc_voice_session.py monitor --execute --session-key <your-session-key>
@@ -256,7 +168,7 @@ Note: `session-key` is a private credential. Do not commit it to the repository.
 
 ---
 
-### 4. Start Human Detection and Safety Alert
+### 3. Start Human Detection and Safety Alert
 
 ```bash
 cd person_distance
@@ -272,7 +184,7 @@ Function description:
 
 ---
 
-### 5. Start VLA Inference Services
+### 4. Start VLA Inference Services
 
 Different tasks correspond to different VLA server scripts.
 
@@ -303,7 +215,7 @@ The VLA server is responsible for:
 
 ---
 
-### 6. Start the Robotic Arm Control Chain
+### 5. Start the Robotic Arm Control Chain
 
 ```bash
 source RoboOrchard/ros2_package/install/setup.bash
