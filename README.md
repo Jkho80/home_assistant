@@ -51,9 +51,9 @@
 |---|---|
 | `RoboOrchard/` | 核心机器人框架，包括 ROS2 控制、CAN 总线、Piper 机械臂 SDK、RealSense 相机驱动与 VLA 部署相关代码 |
 | `HoloBrain_ws/` | VLA 模型文件与推理服务端脚本，包括物体抓取、摇瓶子、整理餐具等任务 |
-| `Face_Emotion/` | 实时面部表情识别模块，包含 YOLOv8 BPU 人脸检测与 MobileFaceNet 情绪分类 |
+| `Face_Emotion/` | 实时面部表情识别模块，包含 YOLOv11 BPU 人脸检测与 MobileFaceNet 情绪分类 |
 | `Voice/` | 语音模块串口桥接、TTS FIFO 监听、语音命令转发到 OpenClaw 会话 |
-| `person_distance/` | 人员检测、RealSense 深度测距、PTZ 云台跟踪与安全告警 |
+| `person_distance/` | YOLOv11 BPU 人员检测、RealSense 深度测距、PTZ 云台跟踪与安全告警 |
 | `environtment.yml` | Conda 环境定义，默认环境名为 `holo` |
 | `requirements.txt` | Python pip 依赖清单 |
 | `README.md` | 项目说明文档 |
