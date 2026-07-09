@@ -316,7 +316,7 @@ The following are partial test metrics from the project. Results may vary with m
 | Category | Metric | Result |
 |---|---|---|
 | Edge Inference | YOLO average / P95 inference time | 2.93 / 3.69 ms |
-| Edge Inference | VLA action generation time | Approx. 641.14 ms |
+| Edge Inference | VLA action generation time | Approx. 541.14 ms |
 | Model Deployment | VLA model size | Approx. 367 MB + 36 MB |
 | Safety Protection | Human proximity stop test | 10/10 |
 | Remote Interaction | Feishu communication stability | 20/20 |
