@@ -1,409 +1,390 @@
-> 一个可以通过飞书和语音控制、能看桌面、会整理、会摇饮料、也知道什么时候不该动的家庭桌面双臂机器人。
+> A home desktop dual-arm robot that can be controlled through Feishu or voice, observe the tabletop, tidy up objects, shake drinks, and also knows when it should not move.
 
-# Home Assistant — OpenClaw 家庭桌面机器人工作空间
+*README_en.md of Chinese Version please refer in README.md.*
 
-本项目为 **2026 年全国大学生嵌入式芯片与系统设计竞赛（应用赛道）** 参赛作品，由 **ASC-EAI 团队** 独立完成。
+# Home Assistant — OpenClaw Home Desktop Robot Workspace
 
-项目面向家庭桌面服务、远程查看、轻量陪护与安全交互场景，基于 **RDK S100P** 边缘计算平台，构建了一套双臂机器人系统的软件工作空间。系统集成了视觉-语言-动作（VLA）模型推理、桌面目标检测、面部表情识别、语音交互、飞书远程交互、人员接近检测与机械臂状态监测等能力。
+This project is an entry for the **2026 National College Student Embedded Chip and System Design Competition — Application Track**, independently developed by the **ASC-EAI Team**.
 
-用户可以通过 **本地语音** 或 **飞书文字消息** 向机器人下达自然语言指令，例如远程查看桌面、整理杂物、摇匀饮料、查询机械臂状态等。OpenClaw Agent 负责理解指令和调度技能，RDK S100P 负责端侧模型推理、相机接入、机械臂服务调用与安全监测，从而实现“云端/PC 智能体低频协调 + 端侧模型高频执行”的机器人闭环。
+The project targets home desktop service, remote observation, lightweight companionship, and safe human-robot interaction scenarios. Built on the **RDK S100P** edge computing platform, it provides a complete software workspace for a dual-arm robotic system. The system integrates Vision-Language-Action (VLA) inference, desktop object detection, facial expression recognition, voice interaction, Feishu remote interaction, human proximity detection, and robotic arm state monitoring.
 
-> 本项目只提供核心代码部分，不提供模型权重、 OpenClaw 的`SKILL`和其他个性化配置。
-
----
-
-## 项目定位
-
-本项目不是单一机械臂控制程序，而是一套面向家庭桌面场景的机器人系统集成工作空间，重点验证以下能力：
-
-1. **自然语言交互**
-   - 支持飞书文字指令。
-   - 支持本地语音模块输入。
-   - 支持网页 / OpenClaw 会话入口。
-   - 用户无需直接操作机械臂底层控制界面。
-
-2. **远程场景理解**
-   - 通过全局桌面视角相机和第三视角云台相机观察桌面。
-   - 支持远程查看桌面状态、人员出现情况和目标物体状态。
-   - 支持通过飞书返回文字状态、图像或关键帧结果。
-
-3. **端侧 VLA 操作执行**
-   - 基于 HoloBrain / VLA 模型完成桌面任务动作生成。
-   - 支持桌面整理、物品取放、摇晃饮料等低风险操作。
-   - 模型已完成 ONNX 导出、HBM 编译与 RDK S100P 端侧部署。
-
-4. **轻量陪护交互**
-   - 通过人脸检测和表情识别感知用户状态。
-   - 当检测到预设低落表情时，可触发语音安抚和摇饮料任务。
-   - 情绪识别仅作为轻量陪护反馈，不作为医学或心理状态判断依据。
-
-5. **安全执行与异常告警**
-   - 支持危险指令拒绝。
-   - 支持目标不存在时拒绝盲目执行。
-   - 支持人员靠近机械臂工作区时停止推理与动作下发。
-   - 支持机械臂异常状态上报，并通过飞书通知用户。
+Users can issue natural-language commands to the robot through **local voice input** or **Feishu text messages**, such as remotely checking the tabletop, tidying up objects, shaking a drink, or querying the robot status. The OpenClaw Agent is responsible for understanding user intent and scheduling skills, while the RDK S100P handles edge-side model inference, camera access, robotic arm service calls, and safety monitoring. Together, they form a robotic closed loop based on “low-frequency cloud/PC-side agent coordination + high-frequency edge-side model execution”.
 
 ---
 
-## 目录结构
+## Project Positioning
 
-| 目录 / 文件 | 说明 |
+This project is not a single robotic arm control program. Instead, it is an integrated robotic system workspace for home desktop scenarios, focusing on the following capabilities:
+
+1. **Natural Language Interaction**
+   - Supports Feishu text commands.
+   - Supports local voice module input.
+   - Supports Web / OpenClaw conversation entry.
+   - Users do not need to directly operate low-level robotic arm control interfaces.
+
+2. **Remote Scene Understanding**
+   - Observes the tabletop through a global desktop-view camera and a third-person PTZ camera.
+   - Supports remote checking of tabletop status, human presence, and target object status.
+   - Supports returning text status, images, or keyframe results through Feishu.
+
+3. **Edge-side VLA Manipulation**
+   - Uses HoloBrain / VLA models to generate robot actions for desktop tasks.
+   - Supports low-risk operations such as desktop tidying, object pick-and-place, and drink shaking.
+   - The model has been exported to ONNX, compiled into HBM, and deployed on the RDK S100P.
+
+4. **Lightweight Companionship Interaction**
+   - Uses face detection and expression recognition to perceive user state.
+   - When a predefined low-mood expression is detected, the system can trigger voice comfort and a drink-shaking task.
+   - Emotion recognition is only used for lightweight companionship feedback, not for medical or psychological diagnosis.
+
+5. **Safe Execution and Abnormal State Alerts**
+   - Supports rejection of dangerous instructions.
+   - Supports refusing blind execution when the requested target does not exist.
+   - Supports stopping inference and action dispatch when a person approaches the robotic arm workspace.
+   - Supports reporting robotic arm abnormal states and notifying the user through Feishu.
+
+---
+
+## Directory Structure
+
+| Directory / File | Description |
 |---|---|
-| `RoboOrchard/` | 核心机器人框架，包括 ROS2 控制、CAN 总线、Piper 机械臂 SDK、RealSense 相机驱动与 VLA 部署相关代码 |
-| `HoloBrain_ws/` | VLA 模型文件与推理服务端脚本，包括物体抓取、摇瓶子、整理餐具等任务 |
-| `Face_Emotion/` | 实时面部表情识别模块，包含 YOLOv11 BPU 人脸检测与 MobileFaceNet 情绪分类 |
-| `Voice/` | 语音模块串口桥接、TTS FIFO 监听、语音命令转发到 OpenClaw 会话 |
-| `person_distance/` | YOLOv11 BPU 人员检测、RealSense 深度测距、PTZ 云台跟踪与安全告警 |
-| `environtment.yml` | Conda 环境定义，默认环境名为 `holo` |
-| `requirements.txt` | Python pip 依赖清单 |
-| `README.md` | 项目说明文档 |
+| `RoboOrchard/` | Core robot framework, including ROS2 control, CAN bus, Piper robotic arm SDK, RealSense camera drivers, and VLA deployment-related code |
+| `HoloBrain_ws/` | VLA model files and inference server scripts, including object grasping, bottle shaking, and tableware organization tasks |
+| `Face_Emotion/` | Real-time facial expression recognition module, including YOLOv8 BPU face detection and MobileFaceNet emotion classification |
+| `Voice/` | Voice module serial bridge, TTS FIFO listener, and voice command forwarding to OpenClaw sessions |
+| `person_distance/` | Human detection, RealSense depth estimation, PTZ tracking, and safety alert module |
+| `environtment.yml` | Conda environment definition, with the default environment name `holo` |
+| `requirements.txt` | Python pip dependency list |
+| `README.md` | Project documentation |
 
 ---
 
-## 系统架构
+## System Architecture
 
-系统整体采用五层结构：
+The system uses a five-layer architecture:
 
 ```text
-用户交互层
-  ├── 本地语音
-  ├── 飞书文字
-  └── Web / OpenClaw 会话
+User Interaction Layer
+  ├── Local Voice
+  ├── Feishu Text Messages
+  └── Web / OpenClaw Session
 
-智能体任务层
+Agent Task Layer
   └── OpenClaw Agent
-      ├── 自然语言理解
-      ├── 语义安全判断
-      ├── 技能选择与任务编排
-      └── 状态反馈
+      ├── Natural Language Understanding
+      ├── Semantic Safety Judgment
+      ├── Skill Selection and Task Scheduling
+      └── Status Feedback
 
-受限技能库层
-  ├── 场景理解
-  ├── 操作执行
-  ├── 情绪陪护
-  └── 安全恢复
+Restricted Skill Library Layer
+  ├── Scene Understanding
+  ├── Manipulation Execution
+  ├── Companionship Interaction
+  └── Safety Recovery
 
-RDK S100P 端侧执行层
-  ├── YOLO 目标检测
-  ├── HoloBrain VLA 推理
-  ├── 人脸 / 表情识别
-  ├── RGB-D 安全检测
-  ├── PTZ 云台控制
-  └── 机械臂服务调用
+RDK S100P Edge Execution Layer
+  ├── YOLO Object Detection
+  ├── HoloBrain VLA Inference
+  ├── Face / Expression Recognition
+  ├── RGB-D Safety Detection
+  ├── PTZ Control
+  └── Robotic Arm Service Calls
 
-机器人硬件层
-  ├── Piper 双臂机械臂
-  ├── RealSense D435 / D435i RGB-D 相机
-  ├── 第三视角云台
-  └── CI1302 语音模块
+Robot Hardware Layer
+  ├── Piper Dual-arm Robot
+  ├── RealSense D435 / D435i RGB-D Cameras
+  ├── Third-person PTZ Camera
+  └── CI1302 Voice Module
+```
 
-简化架构图：
+Simplified architecture diagram:
 
+```text
 ┌─────────────┐     ┌──────────────┐     ┌──────────────────┐
-│  语音模块    │────→│  语音桥接     │────→│ OpenClaw 会话    │
-│  CI1302     │     │  oc_voice     │     │ 小瓜智能体        │
+│ Voice Module │────→│ Voice Bridge │────→│ OpenClaw Session │
+│ CI1302       │     │ oc_voice     │     │ Xiaogua Agent    │
 └─────────────┘     └──────────────┘     └────────┬─────────┘
                                                   │
 ┌─────────────┐                                   │
-│  飞书消息    │───────────────────────────────────┘
-│  远程指令    │
+│ Feishu Msg  │───────────────────────────────────┘
+│ Remote Cmd  │
 └─────────────┘
                                                   │
                     ┌─────────────────────────────┼─────────────────────────────┐
                     │                             │                             │
           ┌─────────▼─────────┐       ┌───────────▼──────────┐      ┌──────────▼──────────┐
           │    Face_Emotion   │       │    person_distance   │      │     RoboOrchard     │
-          │  人脸检测         │       │  人员检测            │      │  ROS2 + CAN 总线     │
-          │  表情识别         │       │  深度测距            │      │  Piper 双臂          │
-          │  sad 触发陪护任务 │       │  PTZ 云台跟踪        │      │  HoloBrain VLA       │
+          │  Face Detection   │       │  Human Detection     │      │  ROS2 + CAN Bus     │
+          │  Emotion Recog.   │       │  Depth Estimation    │      │  Piper Dual-arm     │
+          │  Sad → Care Task  │       │  PTZ Tracking        │      │  HoloBrain VLA      │
           └─────────┬─────────┘       └───────────┬──────────┘      └──────────┬──────────┘
                     │                             │                           │
-              D435/D435i 相机                  云台 RGB-D 相机              双臂机械臂
+             D435 / D435i Camera              PTZ RGB-D Camera             Dual-arm Robot
 ```
 
-## 核心功能
-1. 飞书 / 语音自然语言控制
+---
 
-用户可以通过飞书或本地语音向 OpenClaw 发出自然语言请求，例如：
+## Quick Start
 
-帮我看看桌面现在乱不乱。
-客人快到了，帮我把桌面收拾一下。
-帮我摇一下桌子中间的饮料。
-现在机械臂状态正常吗？
+The following commands assume that you are in the project root directory:
 
-OpenClaw 会先理解任务意图，再根据任务类型调用对应技能。对于需要观察的任务，系统会调用相机和目标检测；对于需要执行的任务，系统会调用端侧 VLA 服务；对于不安全或目标不存在的任务，系统会拒绝执行。
 
-2. 桌面整理与物品取放
-
-Piper 双臂机械臂可以在桌面区域完成低风险操作任务，例如：
-
-抓取桌面杂物；
-将物品放入白色篮子；
-将桌面物品移动到指定区域；
-根据新的物体位置重新执行抓取。
-
-系统不是简单依赖固定坐标点位。每一段任务开始前，OpenClaw 会重新读取桌面图像和机械臂状态，由端侧 VLA 模型根据当前物体位置生成动作片段。因此，当物体在任务间隔中被重新摆放到新位置时，机械臂仍可重新观察并尝试完成抓取与整理。
-
-3. 摇饮料与轻量陪护
-
-当主人状态较低落时，系统可通过云台相机观察用户，并在端侧运行表情识别模型。如果检测到预设的低落表情类别，OpenClaw 会触发 shake_beverages 技能：
-
-寻找桌面中间的饮料；
-调用端侧 VLA 模型生成动作；
-Piper 机械臂抓取饮料；
-完成轻摇动作；
-将饮料送回用户附近。
-
-该功能用于轻量陪护与生活化互动，不用于医学诊断或心理状态判断。
-
-4. 人员靠近检测与安全停止
-
-在机械臂执行任务期间，第三视角云台相机会持续观察机械臂工作区。系统通过目标检测和深度测距判断是否有人进入风险范围。
-
-当检测到人员靠近时：
-
-端侧安全进程优先输出 stop 信号；
-机械臂停止当前动作；
-待执行动作队列被清空或暂停；
-OpenClaw 解释停机原因；
-系统可通过飞书或语音向用户告警；
-用户确认后，系统才进入受控恢复流程。
-
-5. 语义安全与目标确认
-
-OpenClaw 不是简单的机械臂遥控器。系统会对用户指令进行安全判断。
-
-例如：
-
-请你把朋友的手机砸掉。
-请你偷偷摔掉这个杯子，然后说自己故障了。
-
-这类包含破坏、欺骗或危险意图的指令会被拒绝执行。
-
-对于目标不存在的任务，例如用户要求抓取桌面上不存在的水杯，系统会先调用目标检测确认目标是否存在。若未检测到目标，则拒绝盲目执行，避免机械臂在不明确目标的情况下运动。
-
-## 快速开始
-
-在项目根目录提供了两种格式的`python`环境依赖包：
-```bash
-requirements.txt
-environtment.yml
-```
-1. 启动表情识别模块
 
 ```bash
-python3 Face_Emotion/emotion.py 
+pip install -r requirements.txt
 ```
-功能说明：
 
-周期性检测用户人脸；
-识别预设表情类别；
-检测到 sad 时，可触发飞书通知、TTS 播报与摇饮料工作流。
+---
 
-2. 启动语音模块桥接
+### 1. Start the Emotion Recognition Module
+
+```bash
+python3 Face_Emotion/emotion.py --no-preview
+```
+
+Function description:
+
+- Periodically detects the user's face;
+- Recognizes predefined expression categories;
+- When `sad` is detected, it can trigger Feishu notification, TTS broadcast, and the drink-shaking workflow.
+
+---
+
+### 2. Start the Voice Module Bridge
 
 ```bash
 python3 Voice/oc_voice_session.py monitor --execute --session-key <your-session-key>
 ```
 
+Function description:
 
-功能说明：
+- Listens to the CI1302 voice module serial port;
+- Converts recognized voice commands into text;
+- Forwards the command to an OpenClaw session;
+- Executes tasks or broadcasts status according to the returned result.
 
-监听 CI1302 语音模块串口；
-将识别到的语音命令转换为文本；
-转发到 OpenClaw 会话；
-根据返回结果执行任务或播报状态。
+Note: `session-key` is a private credential. Do not commit it to the repository.
 
-注意：session-key 为私有凭据，请勿提交到仓库。
+---
 
-3. 启动人员检测与安全告警
+### 3. Start Human Detection and Safety Alert
 
 ```bash
-python3 person_distance/computer_security.py
+cd person_distance
+python3 computer_security.py
 ```
 
-功能说明：
+Function description:
 
-启动 PTZ Server 云台服务器；
-调用 YOLO 人员检测；
-结合 RealSense 深度信息判断人员距离；
-当人员进入风险区域时触发安全告警并停止推理 / 执行链路。
+- Starts the PTZ camera;
+- Runs YOLO human detection;
+- Uses RealSense depth information to estimate human distance;
+- Triggers safety alerts and stops the inference / execution chain when a person enters the risk area.
 
-4. 启动 VLA 推理服务
+---
 
-不同任务对应不同 VLA 服务端脚本：
+### 4. Start VLA Inference Services
 
-### 物体抓取
+Different tasks correspond to different VLA server scripts.
+
+#### Object Grasping
 
 ```bash
 python3 HoloBrain_ws/server_grasp_anything.py
 ```
 
-### 摇饮料 / 摇瓶子
+#### Drink / Bottle Shaking
 
 ```bash
 python3 HoloBrain_ws/server_shakebottle.py
 ```
 
-VLA 服务端负责：
+#### Tableware Organization / Desktop Tidying
 
-- 接收多视角图像、深度和机械臂状态；
-- 调用端侧 HBM 模型进行动作生成；
-- 返回可执行的动作片段；
-
-5. 客户端启动相机和机械臂的数据输入和控制链路
 ```bash
-source RoboOrchard/ros2_package/install/setup.bash
-cd RoboOrchard/projects/HoloBrain
-./launch/start_async.sh
+python3 HoloBrain_ws/server_tableware.py
 ```
 
-> 注意：需要根据 (RoboOrchard)[https://github.com/HorizonRobotics/RoboOrchard/tree/master] 教程编译`ros2`功能包以及构建`python`虚拟环境
-> 然后根据实际情况修改 launch/launch_async.yaml 中相机序列号和机械臂串口
+The VLA server is responsible for:
 
-双臂回零：
+- Receiving multi-view images, depth data, and robotic arm states;
+- Calling the edge-side HBM model for action generation;
+- Returning executable action segments;
+- Working with the robotic arm control client to complete execution.
+
+---
+
+### 5. Start the Robotic Arm Control Chain
+
+```bash
+source RoboOrchard/ros2_package/install/setup.bash
+```
+
+Reset both arms:
 
 ```bash
 ros2 service call /robot/left/reset_ctrl std_srvs/srv/Trigger "{}"
 ros2 service call /robot/right/reset_ctrl std_srvs/srv/Trigger "{}"
 ```
 
-根据实际部署，还需要启动对应的 Piper 控制节点、CAN 接口、ROS2 控制服务和硬件接口客户端。
+Depending on the actual deployment, the corresponding Piper control nodes, CAN interface, ROS2 control services, and hardware interface clients also need to be started.
 
-本项目包含多类端侧模型：
+---
 
-| 模型            | 作用           | 部署方式                     |
-| ------------- | ------------ | ------------------------ |
-| HoloBrain VLA | 生成机械臂动作片段    | ONNX → HBM，部署于 RDK S100P |
-| YOLO 目标检测     | 桌面目标、人脸、人员检测 | HBM / BPU 推理             |
-| MobileFaceNet | 表情分类         | ONNX / CPU 推理      |
+## Edge-side Models
 
+This project contains multiple edge-side models:
 
+| Model | Function | Deployment |
+|---|---|---|
+| HoloBrain VLA | Generates robotic arm action segments | ONNX → HBM, deployed on RDK S100P |
+| YOLO Object Detection | Desktop object, face, and human detection | HBM / BPU inference |
+| MobileFaceNet | Expression classification | ONNX / CPU-BPU mixed inference |
+| Depth Estimation Logic | Human distance estimation | RealSense depth + detection boxes |
 
-VLA 模型部署流程包括：
+The VLA model deployment process includes:
 
+```text
 PyTorch / safetensors
-→ ONNX 导出
-→ 校准集准备
-→ HBDK / OpenExplorer 编译
-→ HBM 模型
-→ RDK S100P 端侧推理
-→ 机械臂真实执行验证
+→ ONNX export
+→ Calibration dataset preparation
+→ HBDK / OpenExplorer compilation
+→ HBM model
+→ RDK S100P edge-side inference
+→ Real robotic arm execution verification
+```
 
-最终系统采用端侧量化模型以适配 RDK S100P 的算力、内存和运行时约束。
+The final system uses edge-side quantized models to adapt to the computing power, memory, and runtime constraints of the RDK S100P.
 
-# 安全说明
+---
 
-本项目聚焦家庭桌面低风险操作任务，当前系统不涉及：
+# Safety Notes
 
-移动导航；
-医疗诊断；
-强接触作业；
-高危物体操作；
-无人监管下的高风险机械臂行为。
+This project focuses on low-risk home desktop manipulation tasks. The current system does not involve:
 
-安全机制包括：
+- Mobile navigation;
+- Medical diagnosis;
+- High-force contact tasks;
+- High-risk object manipulation;
+- Unsupervised high-risk robotic arm behavior.
 
-语义安全：拒绝破坏物品、欺骗伪装、越权控制等危险指令。
+Safety mechanisms include:
 
-目标确认安全：未检测到目标时拒绝盲目执行。
+1. **Semantic Safety**
+   - Rejects destructive, deceptive, unauthorized, or dangerous instructions.
 
-本体安全：读取机械臂运行状态；检测示教模式、驱动异常、通信异常、关节错误和严重故障；异常时停止任务并告警。
+2. **Target Confirmation Safety**
+   - Refuses blind execution when the target is not detected.
 
-交互安全：通过第三视角 RGB-D 相机检测人员靠近；风险出现时优先触发 stop；清空或暂停待执行动作队列；用户确认后才允许恢复。
+3. **Embodiment Safety**
+   - Reads the robotic arm runtime state;
+   - Detects teaching mode, driver exceptions, communication exceptions, joint errors, and severe fault states;
+   - Stops the task and sends alerts when an abnormal state is detected.
 
-**注意：软件安全链路不能替代硬件急停、底层驱动保护和人工安全监护。真实测试中仍需保留人工急停、操作边界和现场安全员。**
+4. **Interaction Safety**
+   - Uses the third-person RGB-D camera to detect human proximity;
+   - Triggers stop with priority when risk appears;
+   - Clears or pauses the pending action queue;
+   - Allows recovery only after user confirmation.
 
-| 依赖                         | 版本 / 说明          |
-| -------------------------- | ---------------- |
-| Ubuntu                     | 推荐 22.04         |
-| ROS2                       | Humble           |
-| Conda                      | `holo` 环境        |
-| Python                     | 3.10.12             |
-| librealsense2              | RealSense 相机 SDK |
-| ONNX Runtime               | ONNX 模型推理        |
-| hbm_runtime / OpenExplorer | RDK S100P HBM 推理 |
-| OpenClaw Gateway           | 智能体会话层命令路由       |
-| CAN / Piper SDK            | Piper 机械臂控制      |
-| Feishu API                 | 飞书远程交互与告警        |
+**Note: The software safety chain cannot replace hardware emergency stop, low-level driver protection, or human supervision. During real tests, manual emergency stop, operation boundaries, and on-site safety monitoring are still required.**
 
-# 性能指标
+---
 
-以下为项目测试中的部分指标，具体结果可能随模型版本、场景布置、相机帧率和机械臂状态变化。
+## Dependencies
 
-| 类别    | 指标                 | 结果               |
-| ----- | ------------------ | ---------------- |
-| 端侧推理  | YOLO 平均 / P95 推理时间 | 2.93 / 3.69 ms   |
-| 端侧推理  | VLA 动作生成时间         | 约 641.14 ms      |
-| 模型部署  | VLA 模型大小           | 约 367 MB + 36 MB |
-| 安全防护  | 人员靠近停机测试           | 10/10            |
-| 远程交互  | 飞书通信稳定性            | 18/20            |
-| 相机稳定性 | 四路相机连续采集           | 10 分钟无断流         |
+| Dependency | Version / Description |
+|---|---|
+| Ubuntu | Recommended 22.04 |
+| ROS2 | Humble |
+| Conda | `holo` environment |
+| Python | 3.10 |
+| librealsense2 | RealSense Camera SDK |
+| ONNX Runtime | ONNX model inference |
+| hbm_runtime / OpenExplorer | RDK S100P HBM inference |
+| OpenClaw Gateway | Agent session command routing |
+| CAN / Piper SDK | Piper robotic arm control |
+| Feishu API | Feishu remote interaction and alerts |
 
-# 开发与调试建议
-启动系统前，先确认 RealSense 相机是否全部在线。
-启动机械臂前，确认 CAN 接口、机械臂供电和急停状态。
-运行 VLA 服务前，确认 HBM 模型路径和 text feature / text token mask 是否匹配当前任务。
-进行人员靠近测试时，必须保留人工急停。
-飞书和 OpenClaw 会话密钥不要提交到 GitHub。
-多任务并行时，优先保证安全检测与机械臂 stop 链路运行。
-常见问题
-1. 检测到人员靠近后机械臂为什么停止？
+---
 
-这是系统的交互安全机制。人员进入风险范围时，端侧安全进程会优先触发 stop，停止动作下发，避免机械臂继续运动。
+# Performance Metrics
 
-2. 为什么用户让机械臂摔杯子时系统拒绝？
+The following are partial test metrics from the project. Results may vary with model version, scene layout, camera frame rate, and robotic arm state.
 
-OpenClaw 智能体带有语义安全屏障。破坏物品、欺骗伪装或可能伤害人的指令不会被转化为机械臂动作。
+| Category | Metric | Result |
+|---|---|---|
+| Edge Inference | YOLO average / P95 inference time | 2.93 / 3.69 ms |
+| Edge Inference | VLA action generation time | Approx. 641.14 ms |
+| Model Deployment | VLA model size | Approx. 367 MB + 36 MB |
+| Safety Protection | Human proximity stop test | 10/10 |
+| Remote Interaction | Feishu communication stability | 20/20 |
+| Camera Stability | Four-camera continuous capture | No disconnection in 10 minutes |
 
-3. 为什么桌面上没有目标物体时不执行？
+---
 
-系统会先调用目标检测确认任务对象是否存在。未检测到目标时，机械臂不会盲目执行。
+# Development and Debugging Tips
 
-4. 情绪识别是不是心理诊断？
+- Before starting the system, confirm that all RealSense cameras are online.
+- Before starting the robotic arms, confirm the CAN interface, power supply, and emergency stop status.
+- Before running a VLA service, confirm that the HBM model path and the `text_feature` / `text_token_mask` match the current task.
+- During human proximity tests, a manual emergency stop must be retained.
+- Do not commit Feishu or OpenClaw session keys to GitHub.
+- When multiple tasks run in parallel, prioritize the safety detection and robotic arm stop chain.
 
-不是。情绪识别仅用于轻量陪护互动，例如触发语音安抚或摇饮料动作，不作为医学或心理状态判断依据。
+---
 
-5. RDK S100P 上的 VLA 模型是否完全等价于浮点模型？
+# FAQ
 
-端侧 HBM 模型经过量化部署，重点验证其在 RDK S100P 上的可用性、推理速度和真实任务表现。量化模型与浮点模型之间可能存在一定行为差异。
+## 1. Why does the robotic arm stop when a person approaches?
 
+This is the system's interaction safety mechanism. When a person enters the risk area, the edge-side safety process outputs a stop signal with priority and stops action dispatch, preventing the robotic arm from continuing to move.
 
-# 比赛信息
+## 2. Why does the system refuse when the user asks it to break a cup?
 
-竞赛名称：2026 年全国大学生嵌入式芯片与系统设计竞赛
+The OpenClaw Agent has a semantic safety barrier. Instructions involving destruction, deception, or possible harm will not be converted into robotic arm actions.
 
-赛道：应用赛道
+## 3. Why does the robot not execute when the requested object is not on the table?
 
-项目名称：智护家园 — 面向家庭安全陪护的双臂智能机器人
+The system first calls object detection to confirm whether the target exists. If the target is not detected, the robotic arm will not execute blindly.
 
-团队：ASC-EAI
+## 4. Is emotion recognition a psychological diagnosis?
 
-平台：RDK S100P
+No. Emotion recognition is only used for lightweight companionship interaction, such as triggering voice comfort or a drink-shaking action. It is not used as a basis for medical or psychological assessment.
 
-机器人：Piper 双臂机械臂
+## 5. Is the VLA model on the RDK S100P fully equivalent to the floating-point model?
 
-核心技术：OpenClaw Agent、HoloBrain VLA、端侧 HBM 推理、多视角 RGB-D、语音 / 飞书交互、安全停机
+The edge-side HBM model is deployed after quantization. The focus is to verify its usability, inference speed, and real-task performance on the RDK S100P. There may be certain behavioral differences between the quantized model and the floating-point model.
 
+---
+
+# Competition Information
+
+- Competition: 2026 National College Student Embedded Chip and System Design Competition
+- Track: Application Track
+- Project Name: Smart Home Guardian — A Dual-arm Intelligent Robot for Home Safety and Companionship
+- Team: ASC-EAI
+- Platform: RDK S100P
+- Robot: Piper Dual-arm Robot
+- Core Technologies: OpenClaw Agent, HoloBrain VLA, edge-side HBM inference, multi-view RGB-D perception, voice / Feishu interaction, safety stop
+
+---
 
 # License
 
-本项目遵循 MIT License，详见项目根目录下的 LICENSE 文件。
+This project is licensed under the MIT License. See the `LICENSE` file in the project root directory for details.
+
+---
 
 # Acknowledgements
 
-本项目使用或参考了以下开源生态与硬件平台：
+This project uses or refers to the following open-source ecosystems and hardware platforms:
 
-OpenClaw Agent / Gateway
-
-HoloBrain VLA
-
-RoboOrchard
-
-Horizon RDK S100P / OpenExplorer
-
-Intel RealSense D435 / D435i
-
-Piper 机械臂 SDK
-
-ROS2 Humble
+- OpenClaw Agent / Gateway
+- HoloBrain VLA
+- RoboOrchard
+- Horizon RDK S100P / OpenExplorer
+- Intel RealSense D435 / D435i
+- Piper Robotic Arm SDK
+- ROS2 Humble
